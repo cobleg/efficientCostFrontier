@@ -1,0 +1,208 @@
+#
+#  Objective: simulate a Translog cost function
+#  Reference: http://www.econ.uzh.ch/static/wp_soi/wp9803.pdf
+
+library(shiny)
+library(markdown)
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+  
+  # Application title
+  titlePanel("Translog Cost Function"),
+  
+  uiOutput('CobbDouglas'),
+  
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout(
+    sidebarPanel(style = "overflow-y:scroll; max-height: 600px; position:relative;",
+      titlePanel("Cost function parameters"),
+      hr(),
+      h6("Variable inputs"),
+      sliderInput("GWh", "Distributed electricity (GWh)",
+                  min = 1, max = 300, value = c(100, 300)),
+      sliderInput("CU", "Number of customers (CU)",
+                  min = 1, max = 20000, value = c(7762, 17217)),
+      sliderInput("AS", "Size of the service area in hectares (AS)",
+                  min = 1, max = 10000, value = c(1130, 5995)),
+      sliderInput("w_L", "Labour price (w_L)",
+                  min = 10000, max = 500000, value = c(77109, 114680)),
+      sliderInput("w_K", "Capital price (w_K)",
+                  min = 10, max = 200, value = c(66.3, 122)),
+      hr(),
+      h2("First-order input parameters"),
+      numericInput("beta_0",
+                   "Beta (Technology shift):",
+                   min = -5,
+                   max = 5,
+                   value = -2.582),
+      numericInput("beta_GWh",
+                   "Beta (Output (GWh)):",
+                   min = -2,
+                   max = 2,
+                   value = -1.016),
+      numericInput("beta_L",
+                   "Beta (Labour):",
+                   min = -1,
+                   max = 1,
+                   value = 0.302),
+      numericInput("beta_CU",
+                   "Beta (Customers):",
+                   min = -1,
+                   max = 1,
+                   value = 0.452),
+      numericInput("beta_AS",
+                   "Beta (Area Served):",
+                   min = -1,
+                   max = 1,
+                   value = 0.226),
+      hr(),
+      h2("Second-order input parameters"),
+      numericInput("beta_GWh2",
+                   "Beta (Output^2 (GWh):",
+                   min = -2,
+                   max = 2,
+                   value = 0.657),
+      numericInput("beta_LL",
+                   "Beta (Labour)^2:",
+                   min = -2,
+                   max = 2,
+                   value = 0.081),
+      numericInput("beta_CU2",
+                   "Beta (Customers)^2:",
+                   min = -2,
+                   max = 2,
+                   value = 0.975),
+      numericInput("beta_AS2",
+                   "Beta (Area served)^2:",
+                   min = -2,
+                   max = 2,
+                   value = -0.059),
+      numericInput("beta_GWh_L",
+                   "Beta (GWh - Labour price):",
+                   min = -2,
+                   max = 2,
+                   value = -0.063),
+      numericInput("beta_GWh_CU",
+                   "Beta (GWh - Customers):",
+                   min = -2,
+                   max = 2,
+                   value = -0.612),
+      numericInput("beta_GWh_AS",
+                   "Beta (GWh - Area served):",
+                   min = -2,
+                   max = 2,
+                   value = 0.011),
+      numericInput("beta_CU_L",
+                   "Beta (Customers - Labour):",
+                   min = -2,
+                   max = 2,
+                   value = 0.105),
+      numericInput("beta_AS_L",
+                   "Beta (Area served - Labour):",
+                   min = -2,
+                   max = 2,
+                   value = -0.019),
+      numericInput("beta_CU_AS",
+                   "Beta (Customers - Area served):",
+                   min = -2,
+                   max = 2,
+                   value = -0.028)
+     ),
+    
+    # Show results
+    mainPanel(
+      HTML(paste(h4("The translog cost function measures the impact of changes in the mix of inputs on cost. This translog cost function 
+                 is intended to be used as a top-down estimator of the impact of economies of scale and density on average cost for electricity utilities."), '<br/>',
+              
+              h4("The parameters' default values have been set according to the estimates provided by:"), '<a href="https://doi.org/10.5167/uzh-51848">Filippini, Massimo & Wild, Joerg. (1998). 
+              The estimation of an Average Cost Frontier to Calculate Benchmark Tariffs for Electricity Distribution.</a>')),
+      plotOutput("plot")
+    )
+  )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  
+  #output$Translog <- renderUI({ withMathJax() })
+  
+  output$plot <- renderPlot({
+    dataPoints <- 100
+    GWh_ <- seq(input$GWh[1], input$GWh[2], length.out = dataPoints ) # Distributed electricity (GWh)
+    CU_ <- seq(input$CU[1], input$CU[2], length.out = dataPoints)  # CU: Number of customers
+    AS_ <- seq(input$AS[1], input$AS[2], length.out = dataPoints ) # Size of service territory (ha)
+    w_L_ <- seq(input$w_L[1], input$w_L[2], length.out = dataPoints) # labour price
+    w_K_ <- seq(input$w_K[1], input$w_K[2], length.out = dataPoints) # capital price
+    
+    med_GWh <- median(GWh_)
+    med_CU <- median(CU_)
+    med_AS <- median(AS_)
+    med_w_L <- median(w_L_)
+    med_w_K <- median(w_K_)
+    
+    GWh <- GWh_/med_GWh
+    CU <- CU_/med_CU
+    AS <- AS_/med_AS
+    w_L <- w_L_/med_w_L
+    w_K <- w_K_/med_w_K
+    
+    
+    # Calculate static baseline average cost
+    beta_0 <- -2.582
+    beta_GWh <- -1.016
+    beta_L <- 0.302
+    beta_CU <- 0.452
+    beta_AS <- 0.226
+    beta_GWh2 <- 0.657
+    beta_LL <- 0.081
+    beta_CU2 <- 0.975
+    beta_AS2 <- -0.059
+    beta_GWh_L <- -0.063
+    beta_GWh_CU <- -0.612
+    beta_GWh_AS <- 0.011
+    beta_CU_L <- 0.105
+    beta_AS_L <- -0.019
+    beta_CU_AS <- -0.028
+    
+    GWh_2 <- seq(100, 300, length.out = dataPoints ) # Distributed electricity (GWh)
+    CU_2 <- seq(7762, 17217, length.out = dataPoints)  # CU: Number of customers
+    AS_2 <- seq(1130, 5995, length.out = dataPoints ) # Size of service territory (ha)
+    w_L_2 <- seq(77109, 114680, length.out = dataPoints) # labour price
+    w_K_2 <- seq(66, 122, length.out = dataPoints) # capital price
+    
+    med_GWh_1 <- median(GWh_2)
+    med_CU_1 <- median(CU_2)
+    med_AS_1 <- median(AS_2)
+    med_w_L_1 <- median(w_L_2)
+    med_w_K_1 <- median(w_K_2)
+    
+    GWh_1 <- GWh_2/med_GWh_1
+    CU_1 <- CU_2/med_CU_1
+    AS_1 <- AS_2/med_AS_1
+    w_L_1 <- w_L_2/med_w_L_1
+    w_K_1 <- w_K_2/med_w_K_1
+    
+    AC_baseline <- exp((beta_0+beta_GWh*log(GWh)+beta_CU*log(CU_1)+beta_L*log(w_L_1/w_K_1)+beta_AS*log(AS_1)
+                   +0.5*beta_GWh2*log(GWh)^2+0.5*beta_CU2*log(CU_1)^2+0.5*beta_LL*log(w_L_1/w_K_1)^2+0.5*beta_AS2*log(AS_1)^2
+                   +beta_GWh_CU*log(GWh)*log(CU_1)+beta_GWh_L*log(GWh)*log(w_L_1/w_K_1)+beta_GWh_AS*log(GWh)*log(AS_1)
+                   +beta_CU_L*log(CU_1)*log(w_L_1/w_K_1)+beta_CU_AS*log(CU_1)*log(AS_1)+beta_AS_L*log(AS_1)*log(w_L_1/w_K_1)) - 0.3)
+    
+    # Calculate average cost (AC) - reactive
+    log_AC_w_K <- (input$beta_0+input$beta_GWh*log(GWh)+input$beta_CU*log(CU)+input$beta_L*log(w_L/w_K)+input$beta_AS*log(AS)
+                  +0.5*input$beta_GWh2*log(GWh)^2+0.5*input$beta_CU2*log(CU)^2+0.5*input$beta_LL*log(w_L/w_K)^2+0.5*input$beta_AS2*log(AS)^2
+                  +input$beta_GWh_CU*log(GWh)*log(CU)+input$beta_GWh_L*log(GWh)*log(w_L/w_K)+input$beta_GWh_AS*log(GWh)*log(AS)
+                  +input$beta_CU_L*log(CU)*log(w_L/w_K)+input$beta_CU_AS*log(CU)*log(AS)+input$beta_AS_L*log(AS)*log(w_L/w_K)) - 0.3
+    
+    
+    AC <- exp(log_AC_w_K)
+    plot(GWh_, AC, type='l', col='red', main = "Scale of output and average cost", xlab = c("Output (GWh)"), ylab = c("Average cost ($/kWh)"), xlim = c(0, 250),ylim = c(0, max( max(AC, 0.5) ))) 
+    lines(GWh_, AC_baseline, col='blue') 
+    grid(NA, NULL, lwd = 2)
+    legend( "topright", c("Average Cost", "Baseline"), fill=c("red", "blue") )
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
