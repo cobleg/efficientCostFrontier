@@ -7,7 +7,12 @@ library(markdown)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  
+  tags$head(tags$script(type = "text/x-mathjax-config", 
+                        'MathJax.Hub.Config({
+                        "HTML-CSS": { linebreaks: { automatic: true } },
+                        SVG: { linebreaks: { automatic: true } }
+                        });')),
+  withMathJax(),
   # Application title
   titlePanel("Translog Cost Function"),
   
@@ -20,9 +25,9 @@ ui <- fluidPage(
       hr(),
       h6("Variable inputs"),
       sliderInput("GWh", "Distributed electricity (GWh)",
-                  min = 1, max = 300, value = c(100, 300)),
+                  min = 1, max = 300, value = c(50, 300)),
       sliderInput("CU", "Number of customers (CU)",
-                  min = 1, max = 20000, value = c(7762, 17217)),
+                  min = 100, max = 20000, value = c(7762, 17217)),
       sliderInput("AS", "Size of the service area in hectares (AS)",
                   min = 1, max = 10000, value = c(1130, 5995)),
       sliderInput("w_L", "Labour price (w_L)",
@@ -58,8 +63,9 @@ ui <- fluidPage(
                    value = 0.226),
       hr(),
       h2("Second-order input parameters"),
+      withMathJax(),
       numericInput("beta_GWh2",
-                   "Beta (Output^2 (GWh):",
+                   "\\(\\beta\\) Beta (Output^2 (GWh):",
                    min = -2,
                    max = 2,
                    value = 0.657),
@@ -117,7 +123,9 @@ ui <- fluidPage(
               
               h4("The parameters' default values have been set according to the estimates provided by:"), '<a href="https://doi.org/10.5167/uzh-51848">Filippini, Massimo & Wild, Joerg. (1998). 
               The estimation of an Average Cost Frontier to Calculate Benchmark Tariffs for Electricity Distribution.</a>')),
-      plotOutput("plot")
+      plotOutput("plot"),
+      checkboxInput('translog_visible', 'Show the cost function formula', FALSE),
+      uiOutput('translog')
     )
   )
 )
@@ -165,7 +173,7 @@ server <- function(input, output) {
     beta_AS_L <- -0.019
     beta_CU_AS <- -0.028
     
-    GWh_2 <- seq(100, 300, length.out = dataPoints ) # Distributed electricity (GWh)
+    GWh_2 <- seq(50, 300, length.out = dataPoints ) # Distributed electricity (GWh)
     CU_2 <- seq(7762, 17217, length.out = dataPoints)  # CU: Number of customers
     AS_2 <- seq(1130, 5995, length.out = dataPoints ) # Size of service territory (ha)
     w_L_2 <- seq(77109, 114680, length.out = dataPoints) # labour price
@@ -200,6 +208,26 @@ server <- function(input, output) {
     lines(GWh_, AC_baseline, col='blue') 
     grid(NA, NULL, lwd = 2)
     legend( "topright", c("Average Cost", "Baseline"), fill=c("red", "blue") )
+  })
+  
+  output$translog <- renderUI({
+    if (!input$translog_visible) return()
+    withMathJax(
+      helpText('Average Cost function: $$ \\ln \\frac{AC_{Ki}}{P_{Ki}} = \\beta_0 + \\beta_y \\ln Y_i + \\beta_{CU} \\ ln CU_i \\\
+               + \\beta_l \\ln \\frac{P_{Li}}{P_{K{i}}} + \\beta_{AS} \\ln AS_i + \\frac{1}{2} \\beta_{yy} ( \\ln Y_i )^2 \\
+               + \\frac{1}{2} \\beta_{CUCU} ( \\ln CU_i )^2 + \\frac{1}{2} \\beta_{ll} ( \\ln \\frac{P_{Li}}{P_{Ki}})^2 \\
+               + \\frac{1}{2} \\beta_{ASAS} (lnAS_i)^2 + \\frac{1}{2} \\beta_{yCU} \\ln Y_i \\ln CU_i + \\frac{1}{2} \\beta_{yl} \\ln Y_i \\ln \\frac{P_{Li}}{P_{Ki}}
+               + \\beta_{yAS} \\ln Y_i \\ln AS_i + \\beta_{CUl} \\ln CU_i \\ln \\frac{P_{Li}}{P_{Ki}} + \\beta_{CUAS} \\ln CU_i \\ln AS_i
+               + \\beta_{ASl} \\ln AS_i \\ln \\frac{P_{Li}}{P_{Ki}} + \\omega_{jt}
+               $$ 
+               where: (1) \\( \\beta_{ij} \\) are the estimated parameters;',  
+               '      (2) \\( \\ln \\) is the natural logarithm operator; ',
+               '      (3) \\( P_i \\) is the price of input \\( i=\\{K, L\\} \\); ',
+               '      (4) \\(Y\\) is output in GWh;',
+               '      (5) \\(CU\\) is the number of customers;',
+               '      (6) \\(AS\\) is the area served in hectares; and',
+               '      (7) \\(\\omega_{jt} \\) captures systematic variation specific to utility \\(j\\) in year \\(t\\). ')
+    )
   })
 }
 
