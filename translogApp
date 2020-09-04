@@ -16,8 +16,6 @@ ui <- fluidPage(
   # Application title
   titlePanel("Translog Cost Function"),
   
-  uiOutput('CobbDouglas'),
-  
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(style = "overflow-y:scroll; max-height: 600px; position:relative;",
