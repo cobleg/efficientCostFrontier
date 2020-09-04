@@ -213,20 +213,22 @@ server <- function(input, output) {
   output$translog <- renderUI({
     if (!input$translog_visible) return()
     withMathJax(
-      helpText('Average Cost function: $$ \\ln \\frac{AC_{Ki}}{P_{Ki}} = \\beta_0 + \\beta_y \\ln Y_i + \\beta_{CU} \\ ln CU_i \\\
+      helpText('Average Cost (AC) function: $$ \\ln \\frac{AC_{Ki}}{P_{Ki}} = \\beta_0 + \\beta_y \\ln Y_i + \\beta_{CU} \\ ln CU_i \\\
                + \\beta_l \\ln \\frac{P_{Li}}{P_{K{i}}} + \\beta_{AS} \\ln AS_i + \\frac{1}{2} \\beta_{yy} ( \\ln Y_i )^2 \\
                + \\frac{1}{2} \\beta_{CUCU} ( \\ln CU_i )^2 + \\frac{1}{2} \\beta_{ll} ( \\ln \\frac{P_{Li}}{P_{Ki}})^2 \\
                + \\frac{1}{2} \\beta_{ASAS} (lnAS_i)^2 + \\frac{1}{2} \\beta_{yCU} \\ln Y_i \\ln CU_i + \\frac{1}{2} \\beta_{yl} \\ln Y_i \\ln \\frac{P_{Li}}{P_{Ki}}
                + \\beta_{yAS} \\ln Y_i \\ln AS_i + \\beta_{CUl} \\ln CU_i \\ln \\frac{P_{Li}}{P_{Ki}} + \\beta_{CUAS} \\ln CU_i \\ln AS_i
-               + \\beta_{ASl} \\ln AS_i \\ln \\frac{P_{Li}}{P_{Ki}} + \\omega_{jt}
+               + \\beta_{ASl} \\ln AS_i \\ln \\frac{P_{Li}}{P_{Ki}} + \\omega_{it}
                $$ 
-               where: (1) \\( \\beta_{ij} \\) are the estimated parameters;',  
+               where: (1) \\( \\beta \\) are the estimated parameters;',  
                '      (2) \\( \\ln \\) is the natural logarithm operator; ',
-               '      (3) \\( P_i \\) is the price of input \\( i=\\{K, L\\} \\); ',
+               '      (3) \\( P_w \\) is the price of input \\( w=\\{K, L\\} \\); ',
                '      (4) \\(Y\\) is output in GWh;',
                '      (5) \\(CU\\) is the number of customers;',
                '      (6) \\(AS\\) is the area served in hectares; and',
-               '      (7) \\(\\omega_{jt} \\) captures systematic variation specific to utility \\(j\\) in year \\(t\\). ')
+               '      (7) \\(\\omega_{it} \\) captures systematic variation specific to utility \\(i\\) in year \\(t\\). ',
+               '      Note: Productive input (K) represents the quantity of capital (e.g. plant and equipment) and (L) represents the quantity of labour.'
+      )
     )
   })
 }
